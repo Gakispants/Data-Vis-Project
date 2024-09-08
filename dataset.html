@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Visualization Project</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        /* Header Styling */
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            font-size: 30px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Navigation Bar */
+        nav {
+            display: flex;
+            justify-content: center;
+            background-color: #34495e;
+            padding: 10px 0;
+        }
+
+        nav a {
+            padding: 14px 20px;
+            text-decoration: none;
+            color: white;
+            font-size: 18px;
+            margin: 0 10px;
+            text-transform: uppercase;
+        }
+
+        nav a:hover {
+            background-color: #2c3e50;
+            border-radius: 5px;
+        }
+
+        /* Section Styling */
+        section {
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            font-size: 28px;
+            color: #2980b9;
+            border-bottom: 2px solid #2980b9;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        p {
+            line-height: 1.6;
+            font-size: 18px;
+        }
+
+        /* Chart Container */
+        #chart-container {
+            margin-top: 30px;
+        }
+
+        /* Footer Styling */
+        footer {
+            background-color: #34495e;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        /* Layout for Responsive */
+        @media (max-width: 768px) {
+            nav {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        Data Visualization Project
+    </header>
+
+    <!-- Navigation Bar -->
+    <nav>
+        <a href="#home">Home</a>
+        <a href="#visualizations">Visualizations</a>
+        <a href="#data-insights">Data Insights</a>
+        <a href="#about">About the Project</a>
+    </nav>
+
+    <!-- Home Section -->
+    <section id="home">
+        <h2>Home</h2>
+        <p>Welcome to our Data Visualization project! Our goal is to provide insightful visualizations that make complex healthcare, finance, and education data easier to understand and interpret.</p>
+    </section>
+
+    <!-- Visualizations Section -->
+    <section id="visualizations">
+        <h2>Visualizations</h2>
+        <p>Below is a sample interactive chart based on healthcare data, showing the life expectancy in various countries over time.</p>
+        <div id="chart-container">
+            <!-- D3.js chart will be rendered here -->
+        </div>
+    </section>
+
+    <!-- Data Insights Section -->
+    <section id="data-insights">
+        <h2>Data Insights</h2>
+        <p>Explore our insights gathered from analyzing various datasets, focusing on healthcare outcomes, financial trends, and education statistics. These insights highlight key trends, patterns, and anomalies in the data.</p>
+    </section>
+
+    <!-- About the Project Section -->
+    <section id="about">
+        <h2>About the Project</h2>
+        <p>This project explores data through interactive visualizations, offering a deep dive into multiple domains. Our approach leverages D3.js for data-driven visualizations that bring these datasets to life.</p>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        &copy; 2024 Data Visualization Project. All rights reserved.
+    </footer>
+
+    <!-- D3.js and Data Visualization -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script>
+        // Sample data: life expectancy from WHO dataset (countries with year and life expectancy)
+        const data = [
+            {country: "Afghanistan", year: 2000, lifeExpectancy: 55},
+            {country: "Afghanistan", year: 2010, lifeExpectancy: 60},
+            {country: "Afghanistan", year: 2020, lifeExpectancy: 65},
+            {country: "Australia", year: 2000, lifeExpectancy: 80},
+            {country: "Australia", year: 2010, lifeExpectancy: 82},
+            {country: "Australia", year: 2020, lifeExpectancy: 84},
+            {country: "Japan", year: 2000, lifeExpectancy: 82},
+            {country: "Japan", year: 2010, lifeExpectancy: 84},
+            {country: "Japan", year: 2020, lifeExpectancy: 86},
+            {country: "USA", year: 2000, lifeExpectancy: 76},
+            {country: "USA", year: 2010, lifeExpectancy: 78},
+            {country: "USA", year: 2020, lifeExpectancy: 79},
+        ];
+
+        const margin = {top: 40, right: 20, bottom: 60, left: 80},
+              width = 800 - margin.left - margin.right,
+              height = 400 - margin.top - margin.bottom;
+
+        // Append the SVG element
+        const svg = d3.select("#chart-container")
+                      .append("svg")
+                      .attr("width", width + margin.left + margin.right)
+                      .attr("height", height + margin.top + margin.bottom)
+                      .append("g")
+                      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        // Set up scales
+        const x = d3.scaleLinear()
+                    .domain([2000, 2020])
+                    .range([0, width]);
+
+        const y = d3.scaleLinear()
+                    .domain([50, 90])
+                    .range([height, 0]);
+
+        // Line generator
+        const line = d3.line()
+                       .x(d => x(d.year))
+                       .y(d => y(d.lifeExpectancy))
+                       .curve(d3.curveMonotoneX);
+
+        // Create axes
+        svg.append("g")
+           .attr("transform", "translate(0," + height + ")")
+           .call(d3.axisBottom(x).tickFormat(d3.format("d")));
+
+        svg.append("g")
+           .call(d3.axisLeft(y));
+
+        // Group data by country
+        const countries = d3.groups(data, d => d.country);
+
+        // Add lines for each country
+        countries.forEach(([country, values]) => {
+            svg.append("path")
+               .datum(values)
+               .attr("fill", "none")
+               .attr("stroke", () => {
+                   return d3.schemeCategory10[Math.floor(Math.random() * 10)];
+               })
+               .attr("stroke-width", 2)
+               .attr("d", line);
+
+            // Add labels for each line (country)
+            svg.append("text")
+               .attr("transform", `translate(${x(values[values.length - 1].year)}, ${y(values[values.length - 1].lifeExpectancy)})`)
+               .attr("dy", ".35em")
+               .attr("x", 5)
+               .style("fill", "#333")
+               .text(country);
+        });
+    </script>
+
+</body>
+</html>
