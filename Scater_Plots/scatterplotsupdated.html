@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Visualization Project</title>
-    <h3>Omeed & Liam</h3>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -76,10 +75,16 @@
             margin-top: 30px;
         }
 
-          /* Chart Container */
-          #chart-container1 {
+        /* Chart Container for Scatter Plot */
+        #chart-container1 {
             margin-top: 30px;
         }
+
+        /* Chart Container for Stacked Bar Chart */
+        #chart-container2 {
+            margin-top: 30px;
+        }
+
         /* Footer Styling */
         footer {
             background-color: #34495e;
@@ -102,6 +107,8 @@
     <header>
         Data Visualization Project
     </header>
+
+    <h3>Omeed & Liam</h3>
 
     <!-- Navigation Bar -->
     <nav>
@@ -126,12 +133,21 @@
         </div>
     </section>
 
-      <!-- Visualizations Section -->
-      <section id="visualizations">
-        <h2>Visualizations 2</h2>
-        <p>Below is a sample Scatter Ploter chart based on healthcare data, showing the housing prices in differnet areas over time.</p>
+    <!-- Scatter Plot Section -->
+    <section id="scatterPlotSection">
+        <h2>Scatter Plot Visualization</h2>
+        <p>Below is a scatter plot chart based on housing prices in different areas.</p>
         <div id="chart-container1">
-            <!-- D3.js chart will be rendered here -->
+            <!-- D3.js scatter plot will be rendered here -->
+        </div>
+    </section>
+
+    <!-- Stacked Bar Chart Section -->
+    <section id="stackedbarChartSection">
+        <h2>Stacked Bar Chart Visualization</h2>
+        <p>Below is a stacked bar chart.</p>
+        <div id="chart-container2">
+            <!-- D3.js stacked bar chart will be rendered here -->
         </div>
     </section>
 
@@ -155,7 +171,7 @@
     <!-- D3.js and Data Visualization -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script>
-        // Sample data: life expectancy from WHO dataset (countries with year and life expectancy)
+        // Line chart script
         const data = [
             {country: "Afghanistan", year: 2000, lifeExpectancy: 55},
             {country: "Afghanistan", year: 2010, lifeExpectancy: 60},
@@ -168,26 +184,13 @@
             {country: "Japan", year: 2020, lifeExpectancy: 86},
             {country: "USA", year: 2000, lifeExpectancy: 76},
             {country: "USA", year: 2010, lifeExpectancy: 78},
-            {country: "USA", year: 2020, lifeExpectancy: 79},
-            {country: "Afghanistan", year: 2000, lifeExpectancy: 55},
-            {country: "Afghanistan", year: 2010, lifeExpectancy: 60},
-            {country: "Afghanistan", year: 2020, lifeExpectancy: 65},
-            {country: "Australia", year: 2000, lifeExpectancy: 80},
-            {country: "Australia", year: 2010, lifeExpectancy: 82},
-            {country: "Australia", year: 2020, lifeExpectancy: 84},
-            {country: "Japan", year: 2000, lifeExpectancy: 82},
-            {country: "Japan", year: 2010, lifeExpectancy: 84},
-            {country: "Japan", year: 2020, lifeExpectancy: 86},
-            {country: "USA", year: 2000, lifeExpectancy: 76},
-            {country: "USA", year: 2010, lifeExpectancy: 78},
-            {country: "USA", year: 2020, lifeExpectancy: 79},
+            {country: "USA", year: 2020, lifeExpectancy: 79}
         ];
 
         const margin = {top: 40, right: 20, bottom: 60, left: 80},
               width = 800 - margin.left - margin.right,
               height = 400 - margin.top - margin.bottom;
 
-        // Append the SVG element
         const svg = d3.select("#chart-container")
                       .append("svg")
                       .attr("width", width + margin.left + margin.right)
@@ -195,7 +198,6 @@
                       .append("g")
                       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-        // Set up scales
         const x = d3.scaleLinear()
                     .domain([2000, 2020])
                     .range([0, width]);
@@ -204,13 +206,11 @@
                     .domain([50, 90])
                     .range([height, 0]);
 
-        // Line generator
         const line = d3.line()
                        .x(d => x(d.year))
                        .y(d => y(d.lifeExpectancy))
                        .curve(d3.curveMonotoneX);
 
-        // Create axes
         svg.append("g")
            .attr("transform", "translate(0," + height + ")")
            .call(d3.axisBottom(x).tickFormat(d3.format("d")));
@@ -218,21 +218,16 @@
         svg.append("g")
            .call(d3.axisLeft(y));
 
-        // Group data by country
         const countries = d3.groups(data, d => d.country);
 
-        // Add lines for each country
         countries.forEach(([country, values]) => {
             svg.append("path")
                .datum(values)
                .attr("fill", "none")
-               .attr("stroke", () => {
-                   return d3.schemeCategory10[Math.floor(Math.random() * 10)];
-               })
+               .attr("stroke", d3.schemeCategory10[Math.floor(Math.random() * 10)])
                .attr("stroke-width", 2)
                .attr("d", line);
 
-            // Add labels for each line (country)
             svg.append("text")
                .attr("transform", `translate(${x(values[values.length - 1].year)}, ${y(values[values.length - 1].lifeExpectancy)})`)
                .attr("dy", ".35em")
@@ -240,92 +235,134 @@
                .style("fill", "#333")
                .text(country);
         });
-
-
-        
     </script>
-    
-  <script> // Set dimensions for the SVG canvas
-    const margin = { top: 50, right: 30, bottom: 60, left: 60 };
-    const width = 800 - margin.left - margin.right;
-    const height = 500 - margin.top - margin.bottom;
 
-    // Append SVG element to the chart container
-    const svg = d3.select("#scatterPlot")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
+    <script>
+        // Scatter plot script
+        const margin2 = { top: 50, right: 30, bottom: 60, left: 60 };
+        const width2 = 800 - margin2.left - margin2.right;
+        const height2 = 500 - margin2.top - margin2.bottom;
+
+        const svg2 = d3.select("#chart-container1")
+            .append("svg")
+            .attr("width", width2 + margin2.left + margin2.right)
+            .attr("height", height2 + margin2.top + margin2.bottom)
+            .append("g")
+            .attr("transform", `translate(${margin2.left},${margin2.top})`);
+
+        // Define the CSV data 
+        d3.csv("data.csv").then(function (data) {
+
+            // X axis
+            const x2 = d3.scaleLinear()
+                .domain([0, 100])  // Adjust domain according to your data
+                .range([0, width2]);
+            svg2.append("g")
+                .attr("transform", `translate(0, ${height2})`)
+                .call(d3.axisBottom(x2));
+
+            // Y axis
+            const y2 = d3.scaleLinear()
+                .domain([0, 100])  // Adjust domain according to your data
+                .range([height2, 0]);
+            svg2.append("g")
+                .call(d3.axisLeft(y2));
+
+            // Plot the points
+            svg2.append("g")
+                .selectAll("dot")
+                .data(data)
+                .enter()
+                .append("circle")
+                .attr("cx", d => x2(d.Housing))  
+                .attr("cy", d => y2(d.Area))  
+                .attr("r", 5)
+                .style("fill", "#69b3a2");
+        });
+    </script>
+
+<script>
+    // Stacked bar Chart Section
+    // Dataset
+    var dataset = [
+        { apples: 5, oranges: 10, grapes: 22 },
+        { apples: 4, oranges: 12, grapes: 28 },
+        { apples: 2, oranges: 19, grapes: 32 },
+        { apples: 7, oranges: 23, grapes: 35 },
+        { apples: 23, oranges: 17, grapes: 43 }
+    ];
+
+    // Width and Height of SVG
+    var w = 400;
+    var h = 300;
+    var padding = 50;
+
+    // Define color scale
+    var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+    // Define scales
+    var xScale = d3.scaleBand()
+        .domain(d3.range(dataset.length))
+        .range([padding, w - padding])
+        .padding(0.1);  // Adds space between bars
+
+    var yScale = d3.scaleLinear()
+        .domain([0, d3.max(dataset, function(d) {
+            return d.apples + d.oranges + d.grapes;
+        })])
+        .range([h - padding, padding]);
+
+    // Stack layout
+    var stack = d3.stack()
+        .keys(["apples", "oranges", "grapes"]);
+
+    var series = stack(dataset);
+
+    // Create SVG element
+    var svg = d3.select("#chart")
+        .append("svg")
+        .attr("width", w)
+        .attr("height", h);
+
+    // Create groups for each stack
+    var groups = svg.selectAll("g")
+        .data(series)
+        .enter()
         .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    // Load CSV data (replace 'data.csv' with your file)
-    d3.csv("data.csv").then(function(data) {
-
-        // Parse the CSV data
-        data.forEach(function(d) {
-            d.x = +d.x; // Convert 'x' to a number
-            d.y = +d.y; // Convert 'y' to a number
+        .style("fill", function(d, i) {
+            return color(i);  // Color for each stack
         });
 
-        // Create scales for X and Y axes
-        const xScale = d3.scaleLinear()
-            .domain([0, d3.max(data, d => d.x) + 20])
-            .range([0, width]);
+    // Create bars for each segment
+    var rects = groups.selectAll("rect")
+        .data(function(d) { return d; })
+        .enter()
+        .append("rect")
+        .attr("x", function(d, i) {
+            return xScale(i);  // X-position
+        })
+        .attr("y", function(d) {
+            return yScale(d[1]);  // Top of the segment
+        })
+        .attr("height", function(d) {
+            return yScale(d[0]) - yScale(d[1]);  // Height of the segment
+        })
+        .attr("width", xScale.bandwidth());  // Width of the bars
 
-        const yScale = d3.scaleLinear()
-            .domain([0, d3.max(data, d => d.y) + 20])
-            .range([height, 0]);
+    // Add axes
+    var xAxis = d3.axisBottom(xScale)
+        .tickFormat(function(d, i) { return "Group " + (i + 1); });
 
-        // Create X and Y axes
-        const xAxis = d3.axisBottom(xScale).ticks(8);
-        const yAxis = d3.axisLeft(yScale).ticks(6);
+    var yAxis = d3.axisLeft(yScale);
 
-        // Append X axis to the SVG
-        svg.append("g")
-            .attr("transform", "translate(0," + height + ")")
-            .call(xAxis)
-            .append("text")
-            .attr("class", "axis-label")
-            .attr("x", width / 2)
-            .attr("y", 40)
-            .text("X Axis Label")
-            .style("text-anchor", "middle");
+    svg.append("g")
+        .attr("transform", "translate(0," + (h - padding) + ")")
+        .call(xAxis);
 
-        // Append Y axis to the SVG
-        svg.append("g")
-            .call(yAxis)
-            .append("text")
-            .attr("class", "axis-label")
-            .attr("transform", "rotate(-90)")
-            .attr("x", -height / 2)
-            .attr("y", -40)
-            .text("Y Axis Label")
-            .style("text-anchor", "middle");
+    svg.append("g")
+        .attr("transform", "translate(" + padding + ",0)")
+        .call(yAxis);
 
-        // Append dots (scatter plot points)
-        svg.selectAll(".dot")
-            .data(data)
-            .enter()
-            .append("circle")
-            .attr("class", "dot")
-            .attr("cx", d => xScale(d.x))
-            .attr("cy", d => yScale(d.y))
-            .attr("r", 7)
-            .on("mouseover", function (event, d) {
-                d3.select("#tooltip")
-                    .style("left", event.pageX + 10 + "px")
-                    .style("top", event.pageY - 10 + "px")
-                    .style("display", "inline-block")
-                    .html(`X: ${d.x}<br>Y: ${d.y}`);
-                d3.select(this).style("fill", "#e74c3c");
-            })
-            .on("mouseout", function () {
-                d3.select("#tooltip").style("display", "none");
-                d3.select(this).style("fill", "#3498db");
-            });
-
-    }).catch(function(error) {
-        console.error('Error loading the CSV data:', error);
-    });
 </script>
 </body>
 </html>

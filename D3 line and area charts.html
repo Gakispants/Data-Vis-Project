@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="Data Visualisation" />
+    <meta name="keywords" content="HTML, CSS, D3, CSV" />
+    <meta name="author" content="Omeed Ali Hussaini" />
+    <title>7.4 Lab 1 D3 Line and Area Charts</title>
+    
+    <!-- Link to the D3 library -->
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            color: navy;
+        }
+
+        .warning {
+            color: red;
+            font-weight: bold;
+        }
+
+        .bar-label {
+            font-size: 12px;
+            text-anchor: middle;
+        }
+
+        .line {
+            fill: none;
+            stroke: slategrey;
+            stroke-width: 0.5;
+        }
+
+        .halfMilMark {
+            stroke: red;
+            stroke-width: 1;
+            stroke-dasharray: 5, 5;
+        }
+
+        .halfMilLabel {
+            font-size: 10px;
+            fill: red;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>The D3 Journey Starts Here...</h1>
+    
+    <!-- Placeholder for the D3 chart -->
+    <div id="chart"></div>
+
+    <footer style="color:grey; margin-top: 20px;">
+        coS30045 Data Visualisation<br>
+        Joe Bloggs
+    </footer>
+
+    <script>
+        function init() { 
+            var w = 600;
+            var h = 300;
+            var padding = 50;  // Added padding definition
+
+            // Load CSV data
+                 d3.csv("Cleaned_Data.csv").then(function(data) {
+                // Check if data is loaded
+                 console.log("Data Loaded: ", data);
+
+                // Convert strings to dates and numbers
+                 var dataset = data.map(function(d) {
+                    return {
+                         date: new Date(+d.year, +d.month - 1),
+                          number: +d.number
+                     };
+                 });
+
+                console.log("Processed Data: ", dataset);
+
+
+                console.log("Processed Data: ", dataset);
+
+                // Scales
+                var xScale = d3.scaleTime()
+                    .domain([
+                        d3.min(dataset, function(d) { return d.date; }),
+                        d3.max(dataset, function(d) { return d.date; })
+                    ])
+                    .range([0, w]);
+
+                var yScale = d3.scaleLinear()
+                    .domain([0, d3.max(dataset, function(d) { return d.number; })])
+                    .range([h, 0]);
+
+                // Define line generator
+                var line = d3.line()
+                    .x(function(d) { return xScale(d.date); })
+                    .y(function(d) { return yScale(d.number); });
+
+                // Append SVG element
+                var svg = d3.select("#chart")
+                    .append("svg")
+                    .attr("width", w + padding * 2)
+                    .attr("height", h + padding * 2)
+                    .append("g")
+                    .attr("transform", "translate(" + padding + "," + padding + ")");
+
+                // Append line path
+                svg.append("path")
+                    .datum(dataset)
+                    .attr("class", "line")
+                    .attr("d", line);
+
+                // Half a million line
+                svg.append("line")
+                    .attr("class", "line halfMilMark")
+                    .attr("x1", 0)
+                    .attr("y1", yScale(500000))
+                    .attr("x2", w)
+                    .attr("y2", yScale(500000));
+
+                // Half a million label
+                svg.append("text")
+                    .attr("class", "halfMilLabel")
+                    .attr("x", 10)
+                    .attr("y", yScale(500000) - 7)
+                    .text("Half a million unemployed");
+
+                // Define and draw area
+                var area = d3.area()
+                    .x(function(d) { return xScale(d.date); })
+                    .y0(function() { return yScale.range()[0]; })
+                    .y1(function(d) { return yScale(d.number); });
+
+                svg.append("path")
+                    .datum(dataset)
+                    .attr("class", "area")
+                    .attr("d", area);
+            }).catch(function(error) {
+                // Log any error that occurs during CSV loading
+                console.error("Error loading the CSV data: ", error);
+            });
+        }
+
+        // Call the init function to load the chart
+       // init();
+    </script>
+</body>
+</html>
