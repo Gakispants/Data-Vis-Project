@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Expectancy Visualization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        /* Dropdown container styling */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        /* Dropdown content (hidden by default) */
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 200px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+        }
+
+        /* Show the dropdown menu when the button is clicked */
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        /* Checkbox styling inside the dropdown */
+        .dropdown-content label {
+            display: block;
+            padding: 5px;
+            cursor: pointer;
+        }
+
+        /* Style for tooltip */
+        .tooltip {
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 5px;
+            font-size: 12px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <h2>Life Expectancy Visualization</h2>
+    
+    <!-- Dropdown container for country selection -->
+    <div class="dropdown">
+        <button>Select Countries</button>
+        <div class="dropdown-content" id="country-checkboxes"></div> <!-- Country checkboxes will be loaded here -->
+    </div>
+
+    <label for="sex">Select Sex:</label>
+    <select id="sex">
+        <option value="Total">Total</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Male-Female">Male-Female</option> <!-- Only Male-Female difference remains -->
+    </select>
+    
+    <button onclick="generateChart()">Generate Chart</button>
+    
+    <div id="chart"></div>
+    <div id="tooltip" class="tooltip" style="opacity: 0;"></div> <!-- Tooltip container -->
+
+    <script>
+        // Load the CSV file using d3 and extract the country names
+        d3.csv('cleaned_life_expectancy_data.csv').then(function(data) {
+            // Extract unique country names from the CSV data
+            const countries = [...new Set(data.map(d => d.Country))];
+
+            // Debugging: Log the fetched countries to the console
+            console.log('Fetched countries:', countries);
+
+            // Create checkboxes for each country inside the dropdown
+            const countryContainer = document.getElementById('country-checkboxes');
+            countries.forEach(country => {
+                const label = document.createElement('label');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = country;
+                checkbox.name = 'countries';
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(country));
+                countryContainer.appendChild(label);
+            });
+        }).catch(function(error) {
+            console.error('Error loading CSV:', error);
+        });
+
+        function generateChart() {
+            // Get selected countries by checking which checkboxes are ticked
+            const selectedCountries = Array.from(document.querySelectorAll('input[name="countries"]:checked')).map(checkbox => checkbox.value);
+            const selectedSex = document.getElementById('sex').value;
+
+            // Check if any country is selected
+            if (selectedCountries.length === 0) {
+                alert("Please select at least one country.");
+                return;
+            }
+
+            // Fetch the CSV data directly using D3
+            d3.csv('cleaned_life_expectancy_data.csv').then(function(data) {
+                // Filter data based on selected countries and sex, including Male-Female
+                const filteredData = data.filter(d => selectedCountries.includes(d.Country) && d.Sex === selectedSex);
+
+                if (filteredData.length === 0) {
+                    alert("No data available for the selected countries and sex.");
+                    return;
+                }
+
+                // Clear previous chart
+                d3.select("#chart").selectAll("*").remove();
+
+                // Set up SVG dimensions
+                const margin = { top: 20, right: 30, bottom: 40, left: 50 },
+                      width = 800 - margin.left - margin.right,
+                      height = 400 - margin.top - margin.bottom;
+
+                const svg = d3.select("#chart")
+                    .append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+                // Create a color scale for each country
+                const color = d3.scaleOrdinal()
+                    .domain(selectedCountries)
+                    .range(d3.schemeCategory10); // Use a pre-defined color scheme
+
+                // Tooltip for mouseover
+                const tooltip = d3.select("#tooltip");
+
+                // Group the data by country
+                const countryData = d3.groups(filteredData, d => d.Country);
+
+                // Parse the years
+                const years = [...new Set(filteredData.map(d => +d.Year))].sort();
+
+                // X scale and axis (Year)
+                const x = d3.scaleLinear()
+                    .domain(d3.extent(years))
+                    .range([0, width]);
+
+                svg.append("g")
+                    .attr("transform", `translate(0, ${height})`)
+                    .call(d3.axisBottom(x).tickFormat(d3.format("d"))); // Ensure the year is formatted as an integer
+
+                // Y scale and axis (Value)
+                const y = d3.scaleLinear()
+                    .domain([d3.min(filteredData, d => +d.Value) - 5, d3.max(filteredData, d => +d.Value) + 5]) // Give some padding
+                    .range([height, 0]);
+
+                svg.append("g")
+                    .call(d3.axisLeft(y));
+
+                // Line generator function
+                const line = d3.line()
+                    .x(d => x(+d.Year))
+                    .y(d => y(+d.Value));
+
+                // Add lines for each country
+                countryData.forEach(([country, values]) => {
+                    svg.append("path")
+                        .datum(values)
+                        .attr("fill", "none")
+                        .attr("stroke", color(country)) // Assign a unique color to each country
+                        .attr("stroke-width", 1.5)
+                        .attr("d", line);
+
+                    // Add circles at each data point with tooltip interaction
+                    svg.selectAll(".dot")
+                        .data(values)
+                        .enter()
+                        .append("circle")
+                        .attr("cx", d => x(+d.Year))
+                        .attr("cy", d => y(+d.Value))
+                        .attr("r", 4)
+                        .attr("fill", color(country))
+                        .on("mouseover", function(event, d) {
+                            tooltip.transition()
+                                .duration(200)
+                                .style("opacity", .9);
+                            tooltip.html(`Country: ${d.Country}<br>Year: ${d.Year}<br>Life Expectancy: ${d.Value}`)
+                                .style("left", (event.pageX + 5) + "px")
+                                .style("top", (event.pageY - 28) + "px");
+                        })
+                        .on("mouseout", function() {
+                            tooltip.transition()
+                                .duration(500)
+                                .style("opacity", 0);
+                        });
+
+                    // Add country labels near the end of the lines
+                    svg.append("text")
+                        .attr("transform", `translate(${x(+values[values.length - 1].Year)},${y(+values[values.length - 1].Value)})`)
+                        .attr("dy", ".35em")
+                        .attr("x", 5)
+                        .text(country)
+                        .style("font-size", "10px")
+                        .style("fill", color(country));
+                });
+            }).catch(function(error) {
+                console.error('Error loading CSV data:', error);
+            });
+        }
+    </script>
+</body>
+</html>
