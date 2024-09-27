@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="Data Visualization Project" />
+    <meta name="keywords" content="Data, Visualization, Charts, Alcohol, Housing, Food" />
+    <meta name="author" content="Omeed Ali Hussaini" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Global Data Visualization Project</title>
+    
+    <!-- Link to CSS -->
+    <link rel="stylesheet" href="styles.css" />
+
+    <!-- Font Link -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Header Section -->
+    <header>
+        <div class="container">
+            <h1>Global Data Visualization Project</h1>
+            <p>Explore key global trends through interactive visualizations in alcohol consumption, housing prices, and food supply.</p>
+        </div>
+    </header>
+
+    <!-- Main Section with Cards -->
+    <main>
+        <div class="container">
+            <!-- Card 1: Alcohol Consumption -->
+            <div class="card">
+                <div class="card-content">
+                    <h2>Alcohol Consumption</h2>
+                    <p>Explore the patterns of alcohol consumption across different countries for individuals aged 15 and older.</p>
+                    <button onclick="location.href='line_chart.html'">View Visualizations</button>
+                </div>
+                <div class="card-image">
+                    <img src="images/alcohol.jpg" alt="Alcohol Consumption" />
+                </div>
+            </div>
+
+            <!-- Card 2: Housing Prices -->
+            <div class="card">
+                <div class="card-content">
+                    <h2>Housing Prices</h2>
+                    <p>Analyze housing price trends across various countries and understand the factors that drive the market.</p>
+                    <button onclick="location.href='housing-visualization.html'">View Visualizations</button>
+                </div>
+                <div class="card-image">
+                    <img src="images/housing.jpg" alt="Housing Prices" />
+                </div>
+            </div>
+
+            <!-- Card 3: Food Supply and Consumption -->
+            <div class="card">
+                <div class="card-content">
+                    <h2>Food Supply and Consumption</h2>
+                    <p>Discover global food supply trends and consumption levels, comparing across different regions.</p>
+                    <button onclick="location.href='food-visualization.html'">View Visualizations</button>
+                </div>
+                <div class="card-image">
+                    <img src="images/food.jpg" alt="Food Supply and Consumption" />
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Instructions Section -->
+    <section class="instructions">
+        <div class="container">
+            <h2>How to Use the Visualizations</h2>
+            <p>Follow these simple steps to explore the data:</p>
+            <ul>
+                <li>Select a dataset: Alcohol Consumption, Housing Prices, or Food Supply and Consumption.</li>
+                <li>Use the interactive visualizations to filter and compare data for different countries and years.</li>
+                <li>Hover over data points on the line charts and scatter plots for detailed information.</li>
+                <li>Click on sections of the stacked bar charts to view data for specific categories.</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- Footer Section -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Global Data Visualization Project. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -107,13 +107,12 @@
     <header>
         Data Visualization Project
     </header>
-
-    <h3>Omeed & Liam</h3>
+ 
 
     <!-- Navigation Bar -->
     <nav>
         <a href="#home">Home</a>
-        <a href="#visualizations">Visualizations</a>
+        <a href="line_chart.html">Visualizations</a>
         <a href="#data-insights">Data Insights</a>
         <a href="#about">About the Project</a>
     </nav>
@@ -122,6 +121,20 @@
     <section id="home">
         <h2>Home</h2>
         <p>Welcome to our Data Visualization project! Our goal is to provide insightful visualizations that make complex healthcare, finance, and education data easier to understand and interpret.</p>
+    </section>
+
+     <!-- Instructions Section -->
+     <section class="instructions">
+        <div class="container">
+            <h2>How to Use the Visualizations</h2>
+            <p>Follow these simple steps to explore the data:</p>
+            <ul>
+                <li>Select a dataset: Alcohol Consumption, Housing Prices, or Food Supply and Consumption.</li>
+                <li>Use the interactive visualizations to filter and compare data for different countries and years.</li>
+                <li>Hover over data points on the line charts and scatter plots for detailed information.</li>
+                <li>Click on sections of the stacked bar charts to view data for specific categories.</li>
+            </ul>
+        </div>
     </section>
 
     <!-- Visualizations Section -->
@@ -137,6 +150,7 @@
     <section id="scatterPlotSection">
         <h2>Scatter Plot Visualization</h2>
         <p>Below is a scatter plot chart based on housing prices in different areas.</p>
+        <a href="SCATTERPLOTS.HTML">Housing Prices in different area</a>
         <div id="chart-container1">
             <!-- D3.js scatter plot will be rendered here -->
         </div>
@@ -146,6 +160,7 @@
     <section id="stackedbarChartSection">
         <h2>Stacked Bar Chart Visualization</h2>
         <p>Below is a stacked bar chart.</p>
+        <a href="stacked_bar_chart.html">Food Consumption by Countries</a>
         <div id="chart-container2">
             <!-- D3.js stacked bar chart will be rendered here -->
         </div>
@@ -162,6 +177,8 @@
         <h2>About the Project</h2>
         <p>This project explores data through interactive visualizations, offering a deep dive into multiple domains. Our approach leverages D3.js for data-driven visualizations that bring these datasets to life.</p>
     </section>
+
+   
 
     <!-- Footer -->
     <footer>
@@ -237,132 +254,7 @@
         });
     </script>
 
-    <script>
-        // Scatter plot script
-        const margin2 = { top: 50, right: 30, bottom: 60, left: 60 };
-        const width2 = 800 - margin2.left - margin2.right;
-        const height2 = 500 - margin2.top - margin2.bottom;
+    
 
-        const svg2 = d3.select("#chart-container1")
-            .append("svg")
-            .attr("width", width2 + margin2.left + margin2.right)
-            .attr("height", height2 + margin2.top + margin2.bottom)
-            .append("g")
-            .attr("transform", `translate(${margin2.left},${margin2.top})`);
-
-        // Define the CSV data 
-        d3.csv("data.csv").then(function (data) {
-
-            // X axis
-            const x2 = d3.scaleLinear()
-                .domain([0, 100])  // Adjust domain according to your data
-                .range([0, width2]);
-            svg2.append("g")
-                .attr("transform", `translate(0, ${height2})`)
-                .call(d3.axisBottom(x2));
-
-            // Y axis
-            const y2 = d3.scaleLinear()
-                .domain([0, 100])  // Adjust domain according to your data
-                .range([height2, 0]);
-            svg2.append("g")
-                .call(d3.axisLeft(y2));
-
-            // Plot the points
-            svg2.append("g")
-                .selectAll("dot")
-                .data(data)
-                .enter()
-                .append("circle")
-                .attr("cx", d => x2(d.Housing))  
-                .attr("cy", d => y2(d.Area))  
-                .attr("r", 5)
-                .style("fill", "#69b3a2");
-        });
-    </script>
-
-<script>
-    // Stacked bar Chart Section
-    // Dataset
-    var dataset = [
-        { apples: 5, oranges: 10, grapes: 22 },
-        { apples: 4, oranges: 12, grapes: 28 },
-        { apples: 2, oranges: 19, grapes: 32 },
-        { apples: 7, oranges: 23, grapes: 35 },
-        { apples: 23, oranges: 17, grapes: 43 }
-    ];
-
-    // Width and Height of SVG
-    var w = 400;
-    var h = 300;
-    var padding = 50;
-
-    // Define color scale
-    var color = d3.scaleOrdinal(d3.schemeCategory10);
-
-    // Define scales
-    var xScale = d3.scaleBand()
-        .domain(d3.range(dataset.length))
-        .range([padding, w - padding])
-        .padding(0.1);  // Adds space between bars
-
-    var yScale = d3.scaleLinear()
-        .domain([0, d3.max(dataset, function(d) {
-            return d.apples + d.oranges + d.grapes;
-        })])
-        .range([h - padding, padding]);
-
-    // Stack layout
-    var stack = d3.stack()
-        .keys(["apples", "oranges", "grapes"]);
-
-    var series = stack(dataset);
-
-    // Create SVG element
-    var svg = d3.select("#chart")
-        .append("svg")
-        .attr("width", w)
-        .attr("height", h);
-
-    // Create groups for each stack
-    var groups = svg.selectAll("g")
-        .data(series)
-        .enter()
-        .append("g")
-        .style("fill", function(d, i) {
-            return color(i);  // Color for each stack
-        });
-
-    // Create bars for each segment
-    var rects = groups.selectAll("rect")
-        .data(function(d) { return d; })
-        .enter()
-        .append("rect")
-        .attr("x", function(d, i) {
-            return xScale(i);  // X-position
-        })
-        .attr("y", function(d) {
-            return yScale(d[1]);  // Top of the segment
-        })
-        .attr("height", function(d) {
-            return yScale(d[0]) - yScale(d[1]);  // Height of the segment
-        })
-        .attr("width", xScale.bandwidth());  // Width of the bars
-
-    // Add axes
-    var xAxis = d3.axisBottom(xScale)
-        .tickFormat(function(d, i) { return "Group " + (i + 1); });
-
-    var yAxis = d3.axisLeft(yScale);
-
-    svg.append("g")
-        .attr("transform", "translate(0," + (h - padding) + ")")
-        .call(xAxis);
-
-    svg.append("g")
-        .attr("transform", "translate(" + padding + ",0)")
-        .call(yAxis);
-
-</script>
 </body>
 </html>
