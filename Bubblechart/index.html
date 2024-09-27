@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GDP per Capita vs Life Expectancy Bubble Chart</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            padding: 8px;
+            background: lightsteelblue;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+        .bubble {
+            stroke: black;
+            stroke-width: 1px;
+            opacity: 1;
+        }
+        .highlighted {
+            stroke: red;
+            stroke-width: 3px;
+        }
+        .axis-label {
+            font-size: 14px;
+            font-family: sans-serif;
+        }
+        .bubble-label {
+            font-size: 10px;
+            font-family: sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <label for="year-filter">Select Year:</label>
+        <select id="year-filter"></select>
+        <button id="update-chart">Update Chart</button>
+    </div>
+    <div>
+        <label for="country-filter">Select Countries (Ctrl+Click for multiple):</label>
+        <select id="country-filter" multiple>
+            <!-- Countries will be populated here -->
+        </select>
+    </div>
+    <div id="chart"></div>
+
+    <script>
+        let selectedCountries = new Set();  // Set to store selected countries
+
+        // Fetch the data from the PHP backend
+        fetch('data.php')
+            .then(response => response.json())
+            .then(data => {
+                // Log the data for debugging purposes
+                console.log(data);
+
+                // Extract unique years and countries for the filters
+                const years = Array.from(new Set(data.map(d => d.Year))).sort((a, b) => a - b);
+                const countries = Array.from(new Set(data.map(d => d.Country))).sort();
+
+                // Populate the year dropdown
+                const yearFilter = d3.select("#year-filter");
+                years.forEach(year => {
+                    yearFilter.append("option").attr("value", year).text(year);
+                });
+
+                // Populate the country dropdown (multiple select)
+                const countryFilter = d3.select("#country-filter");
+                countries.forEach(country => {
+                    countryFilter.append("option").attr("value", country).text(country);
+                });
+
+                // Initially create the chart for the default year 2021
+                createChart(data, 2021);
+
+                // Update chart when the update button is clicked
+                d3.select("#update-chart").on("click", function() {
+                    const selectedYear = d3.select("#year-filter").property("value");
+                    createChart(data, selectedYear);
+                });
+
+                // Track selected countries
+                d3.select("#country-filter").on("change", function() {
+                    const selectedOptions = Array.from(this.selectedOptions).map(option => option.value);
+                    selectedCountries = new Set(selectedOptions);
+                    highlightCountries(selectedCountries);
+                });
+            })
+            .catch(error => console.error('Error fetching data:', error));
+
+        // Generate a random color
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        // Function to create the chart
+        function createChart(data, selectedYear) {
+            // Filter data for the selected year
+            const filteredData = data.filter(d => d.Year == selectedYear);
+
+            // Clear previous chart
+            d3.select("#chart").html("");
+
+            // Set up the dimensions and margins of the chart
+            const margin = { top: 50, right: 50, bottom: 50, left: 80 };
+            const width = 900 - margin.left - margin.right;
+            const height = 600 - margin.top - margin.bottom;
+
+            const svg = d3.select("#chart")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            // Define scales
+            const xScale = d3.scaleLog()
+                .domain([d3.min(filteredData, d => d.GDPPerCapita) * 0.8, d3.max(filteredData, d => d.GDPPerCapita) * 1.2])
+                .range([0, width]);
+
+            const yScale = d3.scaleLinear()
+                .domain([d3.min(filteredData, d => d.LifeExpectancy) - 5, d3.max(filteredData, d => d.LifeExpectancy) + 5])
+                .range([height, 0]);
+
+            const rScale = d3.scaleSqrt()
+                .domain([0, d3.max(filteredData, d => d.Population)])
+                .range([5, 50]);  // Bubble size scales with population
+
+            // Add x-axis and y-axis with full labeled points on the x-axis
+            svg.append("g")
+                .attr("class", "x-axis")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(xScale).ticks(10, ",.0f"));  // Improved axis labeling for readability
+
+            svg.append("g")
+                .attr("class", "y-axis")
+                .call(d3.axisLeft(yScale));
+
+            // Add axis labels
+            svg.append("text")
+                .attr("class", "axis-label")
+                .attr("x", width / 2)
+                .attr("y", height + margin.bottom - 10)
+                .style("text-anchor", "middle")
+                .text("GDP Per Capita");
+
+            svg.append("text")
+                .attr("class", "axis-label")
+                .attr("transform", "rotate(-90)")
+                .attr("x", -height / 2)
+                .attr("y", -margin.left + 20)
+                .style("text-anchor", "middle")
+                .text("Life Expectancy at Birth");
+
+            // Add tooltip
+            const tooltip = d3.select("body").append("div").attr("class", "tooltip").style("opacity", 0);
+
+            // Assign a random color to each country
+            const countryColors = {};
+            filteredData.forEach(d => {
+                if (!countryColors[d.Country]) {
+                    countryColors[d.Country] = getRandomColor();
+                }
+            });
+
+            // Draw bubbles
+            svg.selectAll(".bubble")
+                .data(filteredData)
+                .enter()
+                .append("circle")
+                .attr("class", "bubble")
+                .attr("cx", d => xScale(d.GDPPerCapita))
+                .attr("cy", d => yScale(d.LifeExpectancy))
+                .attr("r", d => rScale(d.Population))  // Bubble size scales with population
+                .style("fill", d => countryColors[d.Country])  // Assign random color to each bubble
+                .style("opacity", 0.8)
+                .on("mouseover", (event, d) => {
+                    tooltip.transition().duration(200).style("opacity", 1);
+                    tooltip.html(`
+                        Country: ${d.Country}<br>
+                        Continent: ${d.Continent}<br>
+                        GDP per Capita: ${d.GDPPerCapita}<br>
+                        Life Expectancy: ${d.LifeExpectancy}<br>
+                        Population: ${d.Population.toLocaleString()}
+                    `)
+                        .style("left", (event.pageX + 5) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", () => tooltip.transition().duration(500).style("opacity", 0));
+
+                     svg.selectAll(".text")
+                .data(filteredData)
+                .enter()
+                .append("text")
+                 .attr("x", d => xScale(d.GDPPerCapita))
+                .attr("y", d => yScale(d.LifeExpectancy) - rScale(d.Population) - 5)  // Add offset to labels
+                .attr("dy", ".35em")
+                .style("text-anchor", "middle")
+                .style("font-size", "10px")
+                .text(d => d.Country);
+        }
+
+        // Function to highlight selected countries and grey out others
+        function highlightCountries(selectedCountries) {
+            d3.selectAll(".bubble")
+                .style("opacity", d => selectedCountries.size === 0 || selectedCountries.has(d.Country) ? 0.8 : 0.1)
+                .attr("class", d => selectedCountries.has(d.Country) ? "bubble highlighted" : "bubble");
+
+            d3.selectAll("text")
+                .style("opacity", d => selectedCountries.size === 0 || selectedCountries.has(d.Country) ? 1 : 0.1);
+        }
+    </script>
+</body>
+</html>
