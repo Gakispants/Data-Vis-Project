@@ -31,6 +31,10 @@
             font-size: 10px;
             font-family: sans-serif;
         }
+        .checkbox-container {
+            max-height: 200px;
+            overflow-y: scroll;
+        }
     </style>
 </head>
 <body>
@@ -40,76 +44,115 @@
         <button id="update-chart">Update Chart</button>
     </div>
     <div>
-        <label for="country-filter">Select Countries (Ctrl+Click for multiple):</label>
+        <label>Select Countries (Ctrl+Click for multiple):</label>
         <select id="country-filter" multiple>
             <!-- Countries will be populated here -->
         </select>
     </div>
+
+    <div>
+        <label>Remove Countries:</label>
+        <div class="checkbox-container" id="country-remove-list">
+            <!-- Checkboxes will be populated here -->
+        </div>
+    </div>
+
     <div id="chart"></div>
 
     <script>
-        let selectedCountries = new Set();  // Set to store selected countries
+        let data;  // To store the fetched data
+        let selectedYear = 2021;  // Default year
+        let checkedCountries = new Set();  // Set to store checked countries
+        let selectedCountries = new Set();  // Set to store countries selected for highlighting
+        let countryColors;  // For storing unique colors for each country
 
-        // Fetch the data from the PHP backend
+        // Fetch the data from the backend
         fetch('data.php')
             .then(response => response.json())
-            .then(data => {
-                // Log the data for debugging purposes
-                console.log(data);
+            .then(fetchedData => {
+                data = fetchedData;
 
-                // Extract unique years and countries for the filters
-                const years = Array.from(new Set(data.map(d => d.Year))).sort((a, b) => a - b);
-                const countries = Array.from(new Set(data.map(d => d.Country))).sort();
+                // Create a color scale for each country
+                countryColors = d3.scaleOrdinal(d3.schemeCategory10)
+                    .domain(Array.from(new Set(data.map(d => d.Country))));
 
-                // Populate the year dropdown
-                const yearFilter = d3.select("#year-filter");
-                years.forEach(year => {
-                    yearFilter.append("option").attr("value", year).text(year);
-                });
+                // Populate the years, countries dropdowns, and checkboxes
+                populateYearDropdown(data);
+                populateCountryCheckboxes(data);
+                populateCountryFilter(data);
 
-                // Populate the country dropdown (multiple select)
-                const countryFilter = d3.select("#country-filter");
-                countries.forEach(country => {
-                    countryFilter.append("option").attr("value", country).text(country);
-                });
-
-                // Initially create the chart for the default year 2021
-                createChart(data, 2021);
-
-                // Update chart when the update button is clicked
-                d3.select("#update-chart").on("click", function() {
-                    const selectedYear = d3.select("#year-filter").property("value");
-                    createChart(data, selectedYear);
-                });
-
-                // Track selected countries
-                d3.select("#country-filter").on("change", function() {
-                    const selectedOptions = Array.from(this.selectedOptions).map(option => option.value);
-                    selectedCountries = new Set(selectedOptions);
-                    highlightCountries(selectedCountries);
-                });
+                // Initially create the chart for the default year
+                updateChart();
             })
             .catch(error => console.error('Error fetching data:', error));
 
-        // Generate a random color
-        function getRandomColor() {
-            const letters = '0123456789ABCDEF';
-            let color = '#';
-            for (let i = 0; i < 6; i++) {
-                color += letters[Math.floor(Math.random() * 16)];
-            }
-            return color;
+        // Function to populate the year dropdown
+        function populateYearDropdown(data) {
+            const yearFilter = d3.select("#year-filter");
+            const years = Array.from(new Set(data.map(d => d.Year))).sort((a, b) => a - b);
+
+            years.forEach(year => {
+                yearFilter.append("option").attr("value", year).text(year);
+            });
+
+            // Listen for year changes
+            yearFilter.on("change", function() {
+                selectedYear = +this.value;
+                updateChart();
+            });
         }
 
-        // Function to create the chart
-        function createChart(data, selectedYear) {
-            // Filter data for the selected year
-            const filteredData = data.filter(d => d.Year == selectedYear);
+        // Function to populate the country checkboxes for removing countries
+        function populateCountryCheckboxes(data) {
+            const countries = Array.from(new Set(data.map(d => d.Country))).sort();
+            const removeList = d3.select("#country-remove-list");
 
-            // Clear previous chart
+            countries.forEach(country => {
+                const label = removeList.append("label").text(country);
+                label.append("input")
+                    .attr("type", "checkbox")
+                    .attr("value", country)
+                    .property("checked", true)  // All countries checked by default
+                    .on("change", function() {
+                        if (this.checked) {
+                            checkedCountries.add(this.value);
+                        } else {
+                            checkedCountries.delete(this.value);
+                        }
+                        updateChart();  // Update chart whenever a checkbox is changed
+                    });
+                removeList.append("br");
+
+                // Initialize all countries as checked
+                checkedCountries.add(country);
+            });
+        }
+
+        // Function to populate the country filter for highlighting countries
+        function populateCountryFilter(data) {
+            const countryFilter = d3.select("#country-filter");
+            const countries = Array.from(new Set(data.map(d => d.Country))).sort();
+
+            countries.forEach(country => {
+                countryFilter.append("option").attr("value", country).text(country);
+            });
+
+            // Track selected countries for highlighting
+            countryFilter.on("change", function() {
+                const selectedOptions = Array.from(this.selectedOptions).map(option => option.value);
+                selectedCountries = new Set(selectedOptions);
+                updateChart();
+            });
+        }
+
+        // Function to update the chart based on the selected year and checked countries
+        function updateChart() {
+            // Filter data for the selected year and checked countries
+            const filteredData = data.filter(d => d.Year === selectedYear && checkedCountries.has(d.Country));
+
+            // Clear the previous chart
             d3.select("#chart").html("");
 
-            // Set up the dimensions and margins of the chart
             const margin = { top: 50, right: 50, bottom: 50, left: 80 };
             const width = 900 - margin.left - margin.right;
             const height = 600 - margin.top - margin.bottom;
@@ -117,11 +160,12 @@
             const svg = d3.select("#chart")
                 .append("svg")
                 .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .append("g")
+                .attr("height", height + margin.top + margin.bottom);
+
+            const chartGroup = svg.append("g")
                 .attr("transform", `translate(${margin.left},${margin.top})`);
 
-            // Define scales
+            // Set up scales
             const xScale = d3.scaleLog()
                 .domain([d3.min(filteredData, d => d.GDPPerCapita) * 0.8, d3.max(filteredData, d => d.GDPPerCapita) * 1.2])
                 .range([0, width]);
@@ -132,27 +176,25 @@
 
             const rScale = d3.scaleSqrt()
                 .domain([0, d3.max(filteredData, d => d.Population)])
-                .range([5, 50]);  // Bubble size scales with population
+                .range([5, 50]);
 
-            // Add x-axis and y-axis with full labeled points on the x-axis
-            svg.append("g")
-                .attr("class", "x-axis")
+            // Add axes
+            const xAxis = chartGroup.append("g")
                 .attr("transform", `translate(0,${height})`)
-                .call(d3.axisBottom(xScale).ticks(10, ",.0f"));  // Improved axis labeling for readability
+                .call(d3.axisBottom(xScale).ticks(10, ",.0f"));
 
-            svg.append("g")
-                .attr("class", "y-axis")
+            const yAxis = chartGroup.append("g")
                 .call(d3.axisLeft(yScale));
 
             // Add axis labels
-            svg.append("text")
+            chartGroup.append("text")
                 .attr("class", "axis-label")
                 .attr("x", width / 2)
                 .attr("y", height + margin.bottom - 10)
                 .style("text-anchor", "middle")
                 .text("GDP Per Capita");
 
-            svg.append("text")
+            chartGroup.append("text")
                 .attr("class", "axis-label")
                 .attr("transform", "rotate(-90)")
                 .attr("x", -height / 2)
@@ -163,59 +205,69 @@
             // Add tooltip
             const tooltip = d3.select("body").append("div").attr("class", "tooltip").style("opacity", 0);
 
-            // Assign a random color to each country
-            const countryColors = {};
-            filteredData.forEach(d => {
-                if (!countryColors[d.Country]) {
-                    countryColors[d.Country] = getRandomColor();
-                }
-            });
+            // Add bubbles
+            const bubbles = chartGroup.selectAll(".bubble")
+                .data(filteredData, d => d.Country)
+                .join(
+                    enter => enter.append("circle")
+                        .attr("class", "bubble")
+                        .attr("cx", d => xScale(d.GDPPerCapita))
+                        .attr("cy", d => yScale(d.LifeExpectancy))
+                        .attr("r", d => rScale(d.Population))
+                        .style("fill", d => countryColors(d.Country))
+                        .style("opacity", d => selectedCountries.has(d.Country) ? 1 : 0.6)  // Highlight logic
+                        .style("stroke", d => selectedCountries.has(d.Country) ? "red" : "black")  // Highlight border
+                        .style("stroke-width", d => selectedCountries.has(d.Country) ? "3px" : "1px")  // Thicker border for highlighted
+                        .on("mouseover", (event, d) => {
+                            tooltip.transition().duration(200).style("opacity", 1);
+                            tooltip.html(`
+                                Country: ${d.Country}<br>
+                                Continent: ${d.Continent}<br>
+                                GDP per Capita: ${d.GDPPerCapita}<br>
+                                Life Expectancy: ${d.LifeExpectancy}<br>
+                                Population: ${d.Population.toLocaleString()}
+                            `)
+                                .style("left", (event.pageX + 5) + "px")
+                                .style("top", (event.pageY - 28) + "px");
+                        })
+                        .on("mouseout", () => tooltip.transition().duration(500).style("opacity", 0)),
+                    update => update
+                        .attr("cx", d => xScale(d.GDPPerCapita))
+                        .attr("cy", d => yScale(d.LifeExpectancy))
+                        .attr("r", d => rScale(d.Population))
+                        .style("fill", d => countryColors(d.Country))
+                        .style("opacity", d => selectedCountries.has(d.Country) ? 1 : 0.6)
+                        .style("stroke", d => selectedCountries.has(d.Country) ? "red" : "black")
+                        .style("stroke-width", d => selectedCountries.has(d.Country) ? "3px" : "1px"),
+                    exit => exit.remove()
+                );
 
-            // Draw bubbles
-            svg.selectAll(".bubble")
-                .data(filteredData)
-                .enter()
-                .append("circle")
-                .attr("class", "bubble")
-                .attr("cx", d => xScale(d.GDPPerCapita))
-                .attr("cy", d => yScale(d.LifeExpectancy))
-                .attr("r", d => rScale(d.Population))  // Bubble size scales with population
-                .style("fill", d => countryColors[d.Country])  // Assign random color to each bubble
-                .style("opacity", 0.8)
-                .on("mouseover", (event, d) => {
-                    tooltip.transition().duration(200).style("opacity", 1);
-                    tooltip.html(`
-                        Country: ${d.Country}<br>
-                        Continent: ${d.Continent}<br>
-                        GDP per Capita: ${d.GDPPerCapita}<br>
-                        Life Expectancy: ${d.LifeExpectancy}<br>
-                        Population: ${d.Population.toLocaleString()}
-                    `)
-                        .style("left", (event.pageX + 5) + "px")
-                        .style("top", (event.pageY - 28) + "px");
-                })
-                .on("mouseout", () => tooltip.transition().duration(500).style("opacity", 0));
+            // Add labels for each bubble
+            const bubbleLabels = chartGroup.selectAll(".text")
+                .data(filteredData, d => d.Country)
+                .join(
+                    enter => enter.append("text")
+                        .attr("x", d => xScale(d.GDPPerCapita))
+                        .attr("y", d => yScale(d.LifeExpectancy) - rScale(d.Population) - 5)
+                        .attr("dy", ".35em")
+                        .style("text-anchor", "middle")
+                        .style("font-size", "10px")
+                        .text(d => d.Country),
+                    update => update
+                        .attr("x", d => xScale(d.GDPPerCapita))
+                        .attr("y", d => yScale(d.LifeExpectancy) - rScale(d.Population) - 5),
+                    exit => exit.remove()
+                );
 
-                     svg.selectAll(".text")
-                .data(filteredData)
-                .enter()
-                .append("text")
-                 .attr("x", d => xScale(d.GDPPerCapita))
-                .attr("y", d => yScale(d.LifeExpectancy) - rScale(d.Population) - 5)  // Add offset to labels
-                .attr("dy", ".35em")
-                .style("text-anchor", "middle")
-                .style("font-size", "10px")
-                .text(d => d.Country);
-        }
+            // Add zoom behavior
+            const zoom = d3.zoom()
+                .scaleExtent([0.5, 10])
+                .on("zoom", (event) => {
+                    chartGroup.attr("transform", event.transform);
+                    bubbleLabels.style("font-size", `${10 / event.transform.k}px`);
+                });
 
-        // Function to highlight selected countries and grey out others
-        function highlightCountries(selectedCountries) {
-            d3.selectAll(".bubble")
-                .style("opacity", d => selectedCountries.size === 0 || selectedCountries.has(d.Country) ? 0.8 : 0.1)
-                .attr("class", d => selectedCountries.has(d.Country) ? "bubble highlighted" : "bubble");
-
-            d3.selectAll("text")
-                .style("opacity", d => selectedCountries.size === 0 || selectedCountries.has(d.Country) ? 1 : 0.1);
+            d3.select("#chart svg").call(zoom);
         }
     </script>
 </body>
