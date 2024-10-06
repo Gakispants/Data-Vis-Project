@@ -1,4 +1,4 @@
-// Define a mercator projection
+// Define a Mercator projection
 const projection = d3.geoMercator()
     .scale(150)  // Adjust the scale to your map size
     .translate([480, 300]);  // Adjust the translate to center your map
@@ -41,12 +41,12 @@ const tooltip = d3.select("#tooltip");
 // Load and render the map
 Promise.all([
     d3.json("updated_custom_geo.json"),  // Load GeoJSON data for the map
-    d3.json("reformatted_chlorophyll_data_multiple_points.json")  // Load chlorophyll data
-]).then(([geoData, chlorophyllData]) => {
+    d3.json("reformatted_chlorophyll_data_multiple_points.json")  // Load the dataset where Chlorophyll represents Life Expectancy
+]).then(([geoData, lifeExpectancyData]) => {
     // Create a lookup table for country data by country name and year
     const dataByCountryYear = {};
-    chlorophyllData.forEach(d => {
-        const normalizedCountry = normalizeCountryName(d.Country);  // Normalize chlorophyll country name
+    lifeExpectancyData.forEach(d => {
+        const normalizedCountry = normalizeCountryName(d.Country);  // Normalize country names
         if (!dataByCountryYear[normalizedCountry]) {
             dataByCountryYear[normalizedCountry] = {};
         }
@@ -54,13 +54,13 @@ Promise.all([
     });
 
     // Get the list of unique years and find the latest year
-    let uniqueYears = [...new Set(chlorophyllData.map(d => d.Year))];  // Extract unique years
+    let uniqueYears = [...new Set(lifeExpectancyData.map(d => d.Year))];  // Extract unique years
     uniqueYears.sort((a, b) => b - a);  // Sort years from highest to lowest
     const latestYear = uniqueYears[0];  // Find the latest year
 
-    // Prepare the color scale for Chlorophyll
-    const chlorophyllScale = d3.scaleSequential(d3.interpolateViridis)
-        .domain(d3.extent(chlorophyllData, d => d.Chlorophyll));
+    // Prepare the color scale for Life Expectancy (interpreting Chlorophyll as Life Expectancy)
+    const lifeExpectancyScale = d3.scaleSequential(d3.interpolateViridis)
+        .domain(d3.extent(lifeExpectancyData, d => d.Chlorophyll));  // Interpret Chlorophyll as Life Expectancy
 
     // Draw the map and add hover events for tooltips
     svg.selectAll("path")
@@ -70,20 +70,21 @@ Promise.all([
         .attr("fill", d => {
             const countryName = normalizeCountryName(d.properties.name);
             const countryData = dataByCountryYear[countryName] && dataByCountryYear[countryName][latestYear];
-            return countryData ? chlorophyllScale(countryData.Chlorophyll) : "#ccc";  // Default to grey if no data
+            return countryData ? lifeExpectancyScale(countryData.Chlorophyll) : "#ccc";  // Use Chlorophyll for fill (as Life Expectancy)
         })
         .attr("stroke", "#333")
         .attr("class", d => `country-${normalizeCountryName(d.properties.name)}`)  // Assign class based on country name
         .on("mouseover", function (event, d) {
             const countryName = normalizeCountryName(d.properties.name);
             const countryData = dataByCountryYear[countryName] && dataByCountryYear[countryName][latestYear];
+
             tooltip.transition().duration(200).style("opacity", 1);
 
             // Check if data exists for the hovered country
             if (countryData) {
                 tooltip.html(`
                     <strong>${countryData.Country}</strong><br>
-                    Chlorophyll: ${countryData.Chlorophyll}<br>
+                    Life Expectancy: ${countryData.Chlorophyll}<br>  <!-- Chlorophyll is actually Life Expectancy -->
                     Population: ${countryData.Population_Size}<br>
                     GDP: ${countryData.GDP}
                 `)
@@ -108,7 +109,7 @@ Promise.all([
             .attr("fill", d => {
                 const countryName = normalizeCountryName(d.properties.name);
                 const countryData = dataByCountryYear[countryName] && dataByCountryYear[countryName][year];
-                return countryData ? chlorophyllScale(countryData.Chlorophyll) : "#ccc";  // Default to grey if no data
+                return countryData ? lifeExpectancyScale(countryData.Chlorophyll) : "#ccc";  // Use Chlorophyll for fill (as Life Expectancy)
             });
     }
 
@@ -141,7 +142,7 @@ Promise.all([
         });
 
     // Populate dropdown with the available countries
-    let uniqueCountries = [...new Set(chlorophyllData.map(d => normalizeCountryName(d.Country)))].sort();  // Normalize and sort country names
+    let uniqueCountries = [...new Set(lifeExpectancyData.map(d => normalizeCountryName(d.Country)))].sort();  // Normalize and sort country names
     countryDropdown.selectAll("option")
         .data(uniqueCountries)
         .enter()
