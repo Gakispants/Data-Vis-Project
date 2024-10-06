@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stacked Bar Chart with D3.js</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .bar {
+            stroke: #fff;
+        }
+
+        .axis-label {
+            font-size: 12px;
+        }
+
+        .legend {
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Stacked Bar Chart of Food Supply and Consumption</h2>
+    <div id="chart"></div>
+
+    <script>
+        // Set dimensions and margins for the chart
+        const margin = { top: 40, right: 30, bottom: 50, left: 60 },
+              width = 960 - margin.left - margin.right,
+              height = 500 - margin.top - margin.bottom;
+
+        // Append SVG and set dimensions
+        const svg = d3.select("#chart")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        // Load the data from CSV
+        d3.csv("cleaned_data.csv").then(function(data) {
+            // Convert values to numbers
+            data.forEach(d => {
+                d.Fat = +d.Fat;
+                d.Protein = +d.Protein;
+                d.Carbohydrates = +d.Carbohydrates;
+            });
+
+            // List of subgroups (i.e., Fat, Protein, Carbohydrates)
+            const subgroups = ['Fat', 'Protein', 'Carbohydrates'];
+
+            // List of groups (i.e., years for stacked bars)
+            const groups = data.map(d => d.Year);
+
+            // Scale for X axis
+            const x = d3.scaleBand()
+                .domain(groups)
+                .range([0, width])
+                .padding([0.2]);
+
+            // Scale for Y axis
+            const y = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.Fat + d.Protein + d.Carbohydrates)])
+                .nice()
+                .range([height, 0]);
+
+            // Color scale
+            const color = d3.scaleOrdinal()
+                .domain(subgroups)
+                .range(['#ff9999', '#66b3ff', '#99ff99']);
+
+            // Stack the data
+            const stackedData = d3.stack()
+                .keys(subgroups)(data);
+
+            // X axis
+            svg.append("g")
+                .attr("transform", `translate(0, ${height})`)
+                .call(d3.axisBottom(x).tickFormat(d3.format("d")));
+
+            // Y axis
+            svg.append("g")
+                .call(d3.axisLeft(y));
+
+            // Bars
+          // Bars
+svg.selectAll("g.layer")
+    .data(stackedData)
+    .enter()
+    .append("g")
+    .attr("fill", d => color(d.key))
+    .selectAll("rect")
+    .data(d => d)
+    .enter()
+    .append("rect")
+    .attr("x", d => x(d.data.Year))
+    .attr("y", d => y(d[1]))
+    .attr("height", d => {
+        const barHeight = y(d[0]) - y(d[1]);
+        return isNaN(barHeight) ? 0 : barHeight;  // Handle NaN height
+    })
+    .attr("width", x.bandwidth());
+
+
+            // Add legend
+            const legend = svg.append("g")
+                .attr("transform", `translate(${width - 120}, 0)`);
+
+            subgroups.forEach((subgroup, i) => {
+                legend.append("rect")
+                    .attr("x", 0)
+                    .attr("y", i * 20)
+                    .attr("width", 18)
+                    .attr("height", 18)
+                    .style("fill", color(subgroup));
+
+                legend.append("text")
+                    .attr("x", 24)
+                    .attr("y", i * 20 + 13)
+                    .text(subgroup)
+                    .attr("class", "legend");
+            });
+        }).catch(function(error) {
+            console.error("Error loading the data: ", error);
+        });
+
+    </script>
+</body>
+</html>

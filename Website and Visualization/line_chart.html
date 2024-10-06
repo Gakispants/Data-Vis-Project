@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
@@ -33,11 +33,17 @@
             fill: none;
             stroke: slategrey;
             stroke-width: 1.5;
+            pointer-events: none; /* Disable pointer events on lines */
         }
 
         .area {
             fill: lightblue;
             opacity: 0.5;
+            pointer-events: none; /* Disable pointer events on areas */
+        }
+
+        .dot {
+            pointer-events: all; /* Ensure dots capture mouse events */
         }
 
         .tooltip {
@@ -159,6 +165,7 @@
                         .attr("cy", function(d) { return yScale(d.consumption); })
                         .attr("r", 3)
                         .attr("fill", colorScale(key))
+                        .attr("class", "dot") <!-- Added class for dots -->
                         .on("mouseover", function(event, d) {
                             tooltip.style("display", "inline")
                                    .style("left", (event.pageX + 10) + "px")
