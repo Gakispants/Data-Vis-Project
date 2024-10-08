@@ -31,7 +31,7 @@
     </style>
 </head>
 <body>
-    <h2>Stacked Bar Chart of Food Supply and Consumption by Country</h2>
+    <h2>Food Supply and Consumption by Country</h2>
 
     <!-- Dropdown Menu -->
     <label for="country-select">Choose a country:</label>
@@ -61,7 +61,7 @@
             .attr("class", "tooltip");
 
         // Load the data from CSV
-        d3.csv("cleaned_data1.csv").then(function(data) {
+        d3.csv("food_data.csv").then(function(data) {
             // Convert values to numbers
             data.forEach(d => {
                 d.Fat = +d.Fat;
@@ -185,5 +185,22 @@
             console.error("Error loading the data: ", error);
         });
     </script>
+
+<!-- Instructions Section -->
+<section class="instructions">
+    <div class="container">
+        <h2>How to Use the Visualizations</h2>
+        <p>Follow these simple steps to explore the data:</p>
+        <ul>
+            <li>Select a dataset: Alcohol Consumption, Housing Prices, or Food Supply and Consumption.</li>
+            <li>Use the interactive visualizations to filter and compare data for different countries and years.</li>
+            <li>Hover over data points on the line charts and scatter plots for detailed information.</li>
+            <li>Click on sections of the stacked bar charts to view data for specific categories.</li>
+        </ul>
+    </div>
+</section>
+
+    <!-- Go Back Button -->
+    <button onclick="location.href='home.html'">Go Back to Home</button>
 </body>
 </html>
