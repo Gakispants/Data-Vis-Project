@@ -9,20 +9,32 @@
     <script src="https://unpkg.com/topojson@3"></script>
 </head>
 <body>
-    <!-- Main container for the map and dropdowns -->
-    <div id="container">
-        <!-- Dropdown for year selection -->
-        <select id="yearDropdown"></select>
-        <!-- Dropdown for country selection -->
-        <select id="countryDropdown"></select>
+    <!-- Main container for the map, instructions, and dropdowns -->
+    <div id="container" style="display: flex; gap: 20px;">
+        
+  <!-- Instructions Paragraph -->
+<div id="instructions">
+  
+    <p>Use the mouse scroll wheel to zoom in or out, or use the buttons above to control zoom levels.</p>
+    <p>Select a country to highlight it for easier identification.</p>
+    <p>Hover over the map to discover more detailed data about each region!</p>
+</div>
 
-        <!-- SVG for the map -->
-        <svg id="map"></svg>
+        <!-- Map and controls container -->
+        <div>
+            <!-- Dropdown for year selection -->
+            <select id="yearDropdown"></select>
+            <!-- Dropdown for country selection -->
+            <select id="countryDropdown"></select>
 
-        <!-- Zoom controls -->
-        <div class="zoom-controls">
-            <button id="zoom-in">+</button>
-            <button id="zoom-out">-</button>
+            <!-- SVG for the map -->
+            <svg id="map"></svg>
+
+            <!-- Zoom controls -->
+            <div class="zoom-controls">
+                <button id="zoom-in">+</button>
+                <button id="zoom-out">-</button>
+            </div>
         </div>
     </div>
 
@@ -31,33 +43,35 @@
 
     <!-- JavaScript for the visualization -->
     <script src="chlorophyll_visualization.js"></script>
-    <style>.go-back-btn {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        background-color: #007BFF; /* Professional blue color */
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        font-size: 16px;
-        font-weight: bold;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background-color 0.3s ease, transform 0.3s ease;
-    }
     
-    .go-back-btn:hover {
-        background-color: #0056b3; /* Darker blue on hover */
-        transform: scale(1.05); /* Slight grow effect on hover */
-    }
-    
-    .go-back-btn:active {
-        transform: scale(0.98); /* Slight shrink on click */
-    }
-    </style>
-      <!-- Go Back Button -->
-      <button onclick="location.href='home.html'">Go Back to Home</button>
+    <style>
+        .go-back-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #007BFF; /* Professional blue color */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
 
-    
+        .go-back-btn:hover {
+            background-color: #0056b3; /* Darker blue on hover */
+            transform: scale(1.05); /* Slight grow effect on hover */
+        }
+
+        .go-back-btn:active {
+            transform: scale(0.98); /* Slight shrink on click */
+        }
+    </style>
+
+    <!-- Go Back Button -->
+    <button class="go-back-btn" onclick="location.href='home.html'">Go Back to Home</button>
+
 </body>
 </html>
