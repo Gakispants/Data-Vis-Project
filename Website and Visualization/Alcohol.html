@@ -1,0 +1,211 @@
+<!DOCTYPE html>  
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="Data Visualisation" />
+    <meta name="keywords" content="HTML, CSS, D3, CSV" />
+    <meta name="author" content="Omeed Ali Hussaini" />
+    <title>D3 Line and Area Charts for Alcohol Data</title>
+    
+    <!-- Link to the D3 library -->
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            color: navy;
+        }
+
+        .warning {
+            color: red;
+            font-weight: bold;
+        }
+
+        .bar-label {
+            font-size: 12px;
+            text-anchor: middle;
+        }
+
+        .line {
+            fill: none;
+            stroke: slategrey;
+            stroke-width: 1.5;
+            pointer-events: none; /* Disable pointer events on lines */
+        }
+
+        .area {
+            fill: lightblue;
+            opacity: 0.5;
+            pointer-events: none; /* Disable pointer events on areas */
+        }
+
+        .dot {
+            pointer-events: all; /* Ensure dots capture mouse events */
+        }
+
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            padding: 5px;
+            background: lightgray;
+            border: 1px solid #ddd;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Alcohol Consumption by Area</h1>
+    
+    <!-- Placeholder for the D3 chart -->
+    <div id="chart"></div>
+
+    <!-- Tooltip for displaying data -->
+    <div id="tooltip" class="tooltip" style="display: none;"></div>
+
+    <footer style="color:grey; margin-top: 20px;">
+        coS30045 Data Visualisation<br>
+        Omeed Bloggs
+    </footer>
+
+    <script>
+        function init() { 
+            var w = 800;
+            var h = 400;
+            var padding = 50;
+
+            // Clear any existing SVG to prevent duplicate charts
+            d3.select("#chart").selectAll("svg").remove();
+
+            // Load CSV data
+            d3.csv("Alcohol_data.csv").then(function(data) {
+                console.log("Data Loaded: ", data);
+
+                // Parse the dataset
+                var dataset = data.map(function(d) {
+                    return {
+                        year: +d.Year,
+                        consumption: +d.AlcoholConsumption,
+                        age: isNaN(+d.Age) ? 0 : +d.Age,  
+                        area: d.Area || "Unknown"
+                    };
+                });
+
+                // Group data by Area
+                var areas = d3.group(dataset, d => d.area);
+
+                // Scales
+                var xScale = d3.scaleLinear()
+                    .domain([d3.min(dataset, function(d) { return d.year; }), d3.max(dataset, function(d) { return d.year; })])
+                    .range([0, w]);
+
+                var yScale = d3.scaleLinear()
+                    .domain([0, d3.max(dataset, function(d) { return d.consumption; })])
+                    .range([h, 0]);
+
+                // Color scale for different areas
+                var colorScale = d3.scaleOrdinal(d3.schemeCategory10)
+                    .domain(Array.from(areas.keys()));
+
+                // Define line generator
+                var line = d3.line()
+                    .x(function(d) { return xScale(d.year); })
+                    .y(function(d) { return yScale(d.consumption); });
+
+                // Define area generator
+                var area = d3.area()
+                    .x(function(d) { return xScale(d.year); })
+                    .y0(yScale(0))
+                    .y1(function(d) { return yScale(d.consumption); });
+
+                // Append SVG element
+                var svg = d3.select("#chart")
+                    .append("svg")
+                    .attr("width", w + padding * 2)
+                    .attr("height", h + padding * 2)
+                    .append("g")
+                    .attr("transform", "translate(" + padding + "," + padding + ")");
+
+                // X-axis
+                svg.append("g")
+                    .attr("transform", "translate(0," + h + ")")
+                    .call(d3.axisBottom(xScale).tickFormat(d3.format("d")));  // Format the ticks to show the year as a number
+
+                // Y-axis
+                svg.append("g")
+                    .call(d3.axisLeft(yScale));
+
+                // Tooltip setup
+                var tooltip = d3.select("#tooltip");
+
+                // Plot lines and areas for each Area group
+                areas.forEach(function(values, key) {
+                    var group = svg.append("g").attr("class", "group-" + key.replace(/\s+/g, '-'));
+
+                    // Append area
+                    group.append("path")
+                        .datum(values)
+                        .attr("class", "area")
+                        .attr("fill", colorScale(key))
+                        .attr("d", area);
+
+                    // Append line
+                    group.append("path")
+                        .datum(values)
+                        .attr("class", "line")
+                        .attr("stroke", colorScale(key))
+                        .attr("d", line);
+
+                    // Add circles for interaction
+                    group.selectAll(".dot")
+                        .data(values)
+                        .enter()
+                        .append("circle")
+                        .attr("cx", function(d) { return xScale(d.year); })
+                        .attr("cy", function(d) { return yScale(d.consumption); })
+                        .attr("r", 3)
+                        .attr("fill", colorScale(key))
+                        .attr("class", "dot")
+                        .on("mouseover", function(event, d) {
+                            tooltip.style("display", "inline")
+                                   .style("left", (event.pageX + 10) + "px")
+                                   .style("top", (event.pageY - 10) + "px")
+                                   .html("Area: " + d.area + "<br>" +
+                                         "Year: " + d.year + "<br>" +
+                                         "Consumption: " + d.consumption + "<br>" +
+                                         "Age: " + d.age);
+                        })
+                        .on("mouseout", function() {
+                            tooltip.style("display", "none");
+                        });
+                });
+
+            }).catch(function(error) {
+                console.error("Error loading the CSV data: ", error);
+            });
+        }
+
+        // Call the init function to load the chart
+        init();
+    </script>
+
+<!-- Instructions Section -->
+<section class="instructions">
+    <div class="container">
+        <h2>How to Use the Visualizations</h2>
+        <p>Follow these simple steps to explore the data:</p>
+        <ul>
+            <li>Select a dataset: Alcohol Consumption, Housing Prices, or Food Supply and Consumption.</li>
+            <li>Use the interactive visualizations to filter and compare data for different countries and years.</li>
+            <li>Hover over data points on the line charts and scatter plots for detailed information.</li>
+            <li>Click on sections of the stacked bar charts to view data for specific categories.</li>
+        </ul>
+    </div>
+</section>
+    <!-- Go Back Button -->
+    <button onclick="location.href='home.html'">Go Back to Home</button>
+</body>
+</html>
