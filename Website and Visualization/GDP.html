@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Chlorophyll Data Visualization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/topojson@3"></script>
+</head>
+<body>
+    <!-- Main container for the map and dropdowns -->
+    <div id="container">
+        <!-- Dropdown for year selection -->
+        <select id="yearDropdown"></select>
+        <!-- Dropdown for country selection -->
+        <select id="countryDropdown"></select>
+
+        <!-- SVG for the map -->
+        <svg id="map"></svg>
+
+        <!-- Zoom controls -->
+        <div class="zoom-controls">
+            <button id="zoom-in">+</button>
+            <button id="zoom-out">-</button>
+        </div>
+    </div>
+
+    <!-- Tooltip container -->
+    <div class="tooltip" id="tooltip"></div>
+
+    <!-- JavaScript for the visualization -->
+    <script src="chlorophyll_visualization.js"></script>
+    <style>.go-back-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background-color: #007BFF; /* Professional blue color */
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+    
+    .go-back-btn:hover {
+        background-color: #0056b3; /* Darker blue on hover */
+        transform: scale(1.05); /* Slight grow effect on hover */
+    }
+    
+    .go-back-btn:active {
+        transform: scale(0.98); /* Slight shrink on click */
+    }
+    </style>
+      <!-- Go Back Button -->
+      <button onclick="location.href='home.html'">Go Back to Home</button>
+
+    
+</body>
+</html>
